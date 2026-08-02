@@ -1,0 +1,49 @@
+services:
+  backend:
+    build: ./backend
+    container_name: fitlog-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:////app/data/fitlog.db
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
+      - MISTRAL_MODEL=${MISTRAL_MODEL:-mistral-small-latest}
+    volumes:
+      - fitlog-data:/app/data
+    networks:
+      - fitlog-network
+    depends_on:
+      - ollama
+
+  frontend:
+    build: ./frontend
+    container_name: fitlog-frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://backend:8000
+    networks:
+      - fitlog-network
+    depends_on:
+      - backend
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: fitlog-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - fitlog-network
+
+networks:
+  fitlog-network:
+    driver: bridge
+
+volumes:
+  fitlog-data:
+  ollama-data:
